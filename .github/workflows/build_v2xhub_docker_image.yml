@@ -1,6 +1,7 @@
 name: Build V2X-Hub Docker Image
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - develop
