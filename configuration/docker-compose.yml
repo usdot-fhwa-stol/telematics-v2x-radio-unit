@@ -1,7 +1,9 @@
 services:
-  db:
+  tru_db:
     image: mysql:8.0
-    container_name: db
+    profiles:
+      - rsu_integration
+    container_name: tru_db
     environment:
       - MYSQL_DATABASE=IVP
       - MYSQL_USER=IVP
@@ -14,13 +16,15 @@ services:
       - ./mysql/localhost.sql:/docker-entrypoint-initdb.d/localhost.sql
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
-  v2xhub:
-    image: usdotfhwaops/v2xhub:telematics-main
-    container_name: v2xhub
+  telematics-v2x-radio-unit:
+    image: usdotfhwastol/telematics-v2x-radio-unit:develop
+    profiles:
+      - rsu_integration
+    container_name: telematics-v2x-radio-unit
     network_mode: host
     restart: always
     depends_on:
-      - db
+      - tru_db
     ulimits:
       nofile:
         soft: 2560
