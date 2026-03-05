@@ -298,9 +298,9 @@ namespace TelematicBridge
 
         // Verify RSU is present before update
         auto snapshot = unit->getTruHealthStatusTrackerForTesting()->getSnapshot();
-        ASSERT_EQ(snapshot.getRsuHealthStatusCount(), 1);
+        EXPECT_EQ(snapshot.getRsuHealthStatusCount(), 1);
         auto rsuIps = unit->getDataSelectionTrackerForTesting()->getLatestRSUIpsWithAvailableTopics();
-        ASSERT_EQ(rsuIps.size(), 1);
+        EXPECT_EQ(rsuIps.size(), 1);
 
         // Create update message with empty RSU configs (removes all RSUs)
         Json::Value updateMsg;
@@ -312,15 +312,15 @@ namespace TelematicBridge
         auto [success, response] = unit->processConfigUpdateAndGenerateResponse(updateMsg);
 
         // Verify update was successful
-        ASSERT_TRUE(success);
+        EXPECT_TRUE(success);
 
         // Verify that all RSUs were removed from health status
         snapshot = unit->getTruHealthStatusTrackerForTesting()->getSnapshot();
-        ASSERT_EQ(snapshot.getRsuHealthStatusCount(), 0);
+        EXPECT_EQ(snapshot.getRsuHealthStatusCount(), 0);
 
         // Verify that all RSUs were removed from available topics
         rsuIps = unit->getDataSelectionTrackerForTesting()->getLatestRSUIpsWithAvailableTopics();
-        ASSERT_EQ(rsuIps.size(), 0);
+        EXPECT_EQ(rsuIps.size(), 0);
 
         unsetenv("RSU_CONFIG_PATH");
     }
@@ -345,9 +345,9 @@ namespace TelematicBridge
 
         // Verify RSU is present before removal
         auto snapshot = unit->getTruHealthStatusTrackerForTesting()->getSnapshot();
-        ASSERT_EQ(snapshot.getRsuHealthStatusCount(), 1);
+        EXPECT_EQ(snapshot.getRsuHealthStatusCount(), 1);
         auto rsuIps = unit->getDataSelectionTrackerForTesting()->getLatestRSUIpsWithAvailableTopics();
-        ASSERT_EQ(rsuIps.size(), 1);
+        EXPECT_EQ(rsuIps.size(), 1);
 
         // Create update message with explicit "remove" action for 192.168.1.10
         Json::Value updateMsg;
@@ -362,15 +362,15 @@ namespace TelematicBridge
         auto [success, response] = unit->processConfigUpdateAndGenerateResponse(updateMsg);
 
         // Verify update was successful
-        ASSERT_TRUE(success);
+        EXPECT_TRUE(success);
 
         // Verify that RSU 192.168.1.10 was removed from health status
         snapshot = unit->getTruHealthStatusTrackerForTesting()->getSnapshot();
-        ASSERT_EQ(snapshot.getRsuHealthStatusCount(), 0);
+        EXPECT_EQ(snapshot.getRsuHealthStatusCount(), 0);
 
         // Verify that RSU 192.168.1.10 was removed from available topics
         rsuIps = unit->getDataSelectionTrackerForTesting()->getLatestRSUIpsWithAvailableTopics();
-        ASSERT_EQ(rsuIps.size(), 0);
+        EXPECT_EQ(rsuIps.size(), 0);
 
         unsetenv("RSU_CONFIG_PATH");
     }
@@ -398,9 +398,9 @@ namespace TelematicBridge
 
         // Verify both RSUs are present before update
         auto snapshot = unit->getTruHealthStatusTrackerForTesting()->getSnapshot();
-        ASSERT_EQ(snapshot.getRsuHealthStatusCount(), 2);
+        EXPECT_EQ(snapshot.getRsuHealthStatusCount(), 2);
         auto rsuIps = unit->getDataSelectionTrackerForTesting()->getLatestRSUIpsWithAvailableTopics();
-        ASSERT_EQ(rsuIps.size(), 2);
+        EXPECT_EQ(rsuIps.size(), 2);
 
         // Create update message: keep 192.168.1.10 (add action) and remove 192.168.1.20 (remove action)
         Json::Value updateMsg;
@@ -431,18 +431,18 @@ namespace TelematicBridge
         auto [success, response] = unit->processConfigUpdateAndGenerateResponse(updateMsg);
 
         // Verify update was successful
-        ASSERT_TRUE(success);
+        EXPECT_TRUE(success);
 
         // Verify that only RSU 192.168.1.10 remains in health status
         snapshot = unit->getTruHealthStatusTrackerForTesting()->getSnapshot();
-        ASSERT_EQ(snapshot.getRsuHealthStatusCount(), 1);
+        EXPECT_EQ(snapshot.getRsuHealthStatusCount(), 1);
         const auto& rsuStatuses = snapshot.getRsuHealthStatus();
-        ASSERT_EQ(rsuStatuses[0].getIp(), "192.168.1.10");
+        EXPECT_EQ(rsuStatuses[0].getIp(), "192.168.1.10");
 
         // Verify that only RSU 192.168.1.10 remains in available topics
         rsuIps = unit->getDataSelectionTrackerForTesting()->getLatestRSUIpsWithAvailableTopics();
-        ASSERT_EQ(rsuIps.size(), 1);
-        ASSERT_EQ(rsuIps[0], "192.168.1.10");
+        EXPECT_EQ(rsuIps.size(), 1);
+        EXPECT_EQ(rsuIps[0], "192.168.1.10");
 
         unsetenv("RSU_CONFIG_PATH");
     }
@@ -473,9 +473,9 @@ namespace TelematicBridge
 
         // Verify all RSUs are present before removal
         auto snapshot = unit->getTruHealthStatusTrackerForTesting()->getSnapshot();
-        ASSERT_EQ(snapshot.getRsuHealthStatusCount(), 3);
+        EXPECT_EQ(snapshot.getRsuHealthStatusCount(), 3);
         auto rsuIps = unit->getDataSelectionTrackerForTesting()->getLatestRSUIpsWithAvailableTopics();
-        ASSERT_EQ(rsuIps.size(), 3);
+        EXPECT_EQ(rsuIps.size(), 3);
 
         // Create update message: remove 192.168.1.20 and 192.168.1.30, keep 192.168.1.10
         Json::Value updateMsg;
@@ -512,18 +512,18 @@ namespace TelematicBridge
         auto [success, response] = unit->processConfigUpdateAndGenerateResponse(updateMsg);
 
         // Verify update was successful
-        ASSERT_TRUE(success);
+        EXPECT_TRUE(success);
 
         // Verify that only RSU 192.168.1.10 remains in health status
         snapshot = unit->getTruHealthStatusTrackerForTesting()->getSnapshot();
-        ASSERT_EQ(snapshot.getRsuHealthStatusCount(), 1);
+        EXPECT_EQ(snapshot.getRsuHealthStatusCount(), 1);
         const auto& rsuStatuses = snapshot.getRsuHealthStatus();
-        ASSERT_EQ(rsuStatuses[0].getIp(), "192.168.1.10");
+        EXPECT_EQ(rsuStatuses[0].getIp(), "192.168.1.10");
 
         // Verify that only RSU 192.168.1.10 remains in available topics
         rsuIps = unit->getDataSelectionTrackerForTesting()->getLatestRSUIpsWithAvailableTopics();
-        ASSERT_EQ(rsuIps.size(), 1);
-        ASSERT_EQ(rsuIps[0], "192.168.1.10");
+        EXPECT_EQ(rsuIps.size(), 1);
+        EXPECT_EQ(rsuIps[0], "192.168.1.10");
 
         unsetenv("RSU_CONFIG_PATH");
     }
@@ -548,9 +548,9 @@ namespace TelematicBridge
 
         // Verify RSU is present before deletion
         auto snapshot = unit->getTruHealthStatusTrackerForTesting()->getSnapshot();
-        ASSERT_EQ(snapshot.getRsuHealthStatusCount(), 1);
+        EXPECT_EQ(snapshot.getRsuHealthStatusCount(), 1);
         auto rsuIps = unit->getDataSelectionTrackerForTesting()->getLatestRSUIpsWithAvailableTopics();
-        ASSERT_EQ(rsuIps.size(), 1);
+        EXPECT_EQ(rsuIps.size(), 1);
 
         // Create update message with "delete" action (should work same as "remove")
         Json::Value updateMsg;
@@ -565,15 +565,15 @@ namespace TelematicBridge
         auto [success, response] = unit->processConfigUpdateAndGenerateResponse(updateMsg);
 
         // Verify update was successful
-        ASSERT_TRUE(success);
+        EXPECT_TRUE(success);
 
         // Verify that RSU 192.168.1.10 was removed from health status
         snapshot = unit->getTruHealthStatusTrackerForTesting()->getSnapshot();
-        ASSERT_EQ(snapshot.getRsuHealthStatusCount(), 0);
+        EXPECT_EQ(snapshot.getRsuHealthStatusCount(), 0);
 
         // Verify that RSU 192.168.1.10 was removed from available topics
         rsuIps = unit->getDataSelectionTrackerForTesting()->getLatestRSUIpsWithAvailableTopics();
-        ASSERT_EQ(rsuIps.size(), 0);
+        EXPECT_EQ(rsuIps.size(), 0);
 
         unsetenv("RSU_CONFIG_PATH");
     }
