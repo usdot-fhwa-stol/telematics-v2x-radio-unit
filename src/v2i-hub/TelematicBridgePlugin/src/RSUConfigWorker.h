@@ -349,6 +349,8 @@ namespace TelematicBridge
          * @return std::string Event name if RSU found, empty string otherwise
          */
         std::string getEventByRsu(const std::string &rsuIp, int rsuPort) const;
+
+        std::vector<std::string> getAllRsuIps() const;
     };
 
 }

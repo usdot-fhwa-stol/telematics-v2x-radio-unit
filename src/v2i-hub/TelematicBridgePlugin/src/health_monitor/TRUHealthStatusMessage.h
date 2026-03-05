@@ -221,6 +221,13 @@ namespace TelematicBridge
         {
             return !(*this == other);
         }
+
+        void removeRsuStatus(const std::string &rsuIp){
+            rsuHealthStatus.erase(
+                std::remove_if(rsuHealthStatus.begin(), rsuHealthStatus.end(),
+                               [&rsuIp](const RSUHealthStatusMessage &status) { return status.getIp() == rsuIp; }),
+                rsuHealthStatus.end());
+        }
     };
 
 } // namespace TelematicBridge

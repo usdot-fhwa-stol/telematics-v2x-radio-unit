@@ -55,6 +55,21 @@ namespace TelematicBridge
         void addRsuTopic(const RSUTopicsMessage& rsuTopic) { _rsuTopics.push_back(rsuTopic); }
 
         /**
+         * @brief Remove an RSU topics message from the list by endpoint
+         * @param endpoint RSU endpoint to remove
+         */
+        void removeRSUTopics(const rsuEndpoint& endpoint)
+        {
+            _rsuTopics.erase(
+                std::remove_if(_rsuTopics.begin(), _rsuTopics.end(),
+                               [&endpoint](const RSUTopicsMessage &msg)
+                               {
+                                   return msg.getRsuEndpoint().ip == endpoint.ip;
+                               }),
+                _rsuTopics.end());
+        }
+
+        /**
          * @brief Get the timestamp
          * @return int64_t Timestamp in milliseconds
          */

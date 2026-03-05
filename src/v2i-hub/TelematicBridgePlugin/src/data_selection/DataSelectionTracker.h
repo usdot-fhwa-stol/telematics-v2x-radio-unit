@@ -136,6 +136,24 @@ namespace TelematicBridge
             std::lock_guard<std::mutex> lock(_rsuSelectedTopicsMutex);
             return _latestSelectedTopicsMessage.toString();
         }
+
+        void removeRsuAvailableTopics(const std::string &rsuIp)
+        {
+            std::lock_guard<std::mutex> lock(_rsuAvailableTopicsMutex);
+            _rsuAvailableTopicsMap.erase(rsuIp);
+            _latestAvailableTopicsMessage.removeRSUTopics({rsuIp, 0}); 
+        }
+
+        std::vector<std::string> getLatestRSUIpsWithAvailableTopics()
+        {
+            std::lock_guard<std::mutex> lock(_rsuAvailableTopicsMutex);
+            std::vector<std::string> rsuIps;
+            for (const auto& entry : _rsuAvailableTopicsMap)
+            {
+                rsuIps.push_back(entry.first);
+            }
+            return rsuIps;
+        }
     };
     
     

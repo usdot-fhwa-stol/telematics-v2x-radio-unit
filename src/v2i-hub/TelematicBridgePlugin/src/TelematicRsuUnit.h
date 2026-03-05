@@ -25,6 +25,9 @@ namespace TelematicBridge
 
     class TelematicRsuUnit: public TelematicUnit
     {
+        // Allow test class to access private members for testing
+        friend class TestTelematicRsuUnit;
+        
     private:
         // NATS subscription for RSU configuration status updates. Used to receive RSU configuration changes from the management service
         natsSubscription *_subRegisteredRSUStatus = nullptr;
@@ -286,6 +289,10 @@ namespace TelematicBridge
          * Cleans up NATS subscriptions and connections
         */
         ~TelematicRsuUnit();
+
+        // Testing accessors - allow tests to verify internal state
+        std::shared_ptr<TRUHealthStatusTracker> getTruHealthStatusTrackerForTesting() { return _truHealthStatusTracker; }
+        std::shared_ptr<DataSelectionTracker> getDataSelectionTrackerForTesting() { return _dataSelectionTracker; }
     };
 
 }
