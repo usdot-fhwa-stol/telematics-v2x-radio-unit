@@ -388,6 +388,22 @@ void MessageReceiverPlugin::UpdateConfigSettings()
 		ip = "127.0.0.1";
 	}
 
+	if (const char* env_p = std::getenv("MESSAGE_RECEIVER_PORT")) {
+		try {
+			unsigned long value = std::stoul(env_p);
+
+			if (value > std::numeric_limits<unsigned short>::max()) {
+				PLOG(logERROR) << "MESSAGE_RECEIVER_PORT out of range, using 26789";
+			} else {
+				port = static_cast<unsigned short>(value);
+			}
+		} catch (const std::exception& e) {
+			PLOG(logERROR) << "Invalid MESSAGE_RECEIVER_PORT, using 26789";
+		}
+	} else {
+		PLOG(logERROR) << "Port not specified, using 26789";
+	}
+
 	std::string request="verifySig";
 	url=baseurl+request;
 	cfgChanged = true;
