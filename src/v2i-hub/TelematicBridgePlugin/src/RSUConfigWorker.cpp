@@ -461,14 +461,10 @@ namespace TelematicBridge
         }
     }
 
-    std::vector<std::string> truConfigWorker::getAllRsuIps() const
+
+    bool truConfigWorker::isRSURegistered(const std::string &rsuIp) const
     {
-        std::vector<std::string> rsuIps;
         std::lock_guard<std::mutex> lock(_configMutex);
-        for (const auto& pair : _truRegistrationMap)
-        {
-            rsuIps.push_back(pair.second.rsu.ip);
-        }
-        return rsuIps;
+        return _truRegistrationMap.find(rsuIp) != _truRegistrationMap.end();
     }
 }

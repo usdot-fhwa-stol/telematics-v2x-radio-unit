@@ -151,30 +151,14 @@ namespace TelematicBridge
         if (isSuccessful)
         {
             // Synchronize the RSU registration update with the RSU health status to ensure we remove the correct RSU status when an RSU is removed from the registration. This can happen when we receive an RSU status update for an RSU that has been removed from the registration but we still have old status for it.
-            auto registeredRsuIps = _truConfigWorkerptr->getAllRsuIps();
-            
-            // Store snapshot to avoid dangling reference to temporary object
             auto snapshot = _truHealthStatusTracker->getSnapshot();
             for (const auto &rsuStatus : snapshot.getRsuHealthStatus())
             {
-                if (std::find(registeredRsuIps.begin(), registeredRsuIps.end(), rsuStatus.getIp()) == registeredRsuIps.end())
+                if (!_truConfigWorkerptr->isRSURegistered(rsuStatus.getIp()))
                 {
                     // If we have an RSU status for an RSU that is not in the registration list, remove the RSU status to keep the data consistent.
                     _truHealthStatusTracker->removeRsuStatus(rsuStatus.getIp());
                     PLOG(logDEBUG3) << "Removed old RSU with IP " << rsuStatus.getIp() << " from health status";
-                }
-            }
-
-            // Synchronize the RSU registration update with the RSUs in available topics to ensure available topics are up to date when we reply to the request
-            // Store RSU IPs to avoid dangling reference to temporary object
-            auto rsuIpsWithAvailableTopics = _dataSelectionTracker->getLatestRSUIpsWithAvailableTopics();
-            for (const auto &rsuIpWithAvailableTopics : rsuIpsWithAvailableTopics)
-            {
-                if (std::find(registeredRsuIps.begin(), registeredRsuIps.end(), rsuIpWithAvailableTopics) == registeredRsuIps.end())
-                {
-                    // If we have RSU registration for an RSU that is not in the available topics list, remove the RSU and its available topics to keep the data consistent. This can happen when an RSU is removed from the registration but we still have old available topics for it.
-                    _dataSelectionTracker->removeRsuAvailableTopics(rsuIpWithAvailableTopics);
-                    PLOG(logDEBUG3) << "Removed old RSU with IP " << rsuIpWithAvailableTopics << " from available topics";
                 }
             }
         }
@@ -281,6 +265,17 @@ namespace TelematicBridge
 
     std::string TelematicRsuUnit::constructRsuAvailableTopicsReplyString()
     {
+        // Synchronize the RSU registration update with the RSUs in available topics to ensure available topics are up to date when we reply to the request
+        auto rsuIpsWithAvailableTopics = _dataSelectionTracker->getLatestRSUIpsWithAvailableTopics();
+        for (const auto &rsuIpWithAvailableTopics : rsuIpsWithAvailableTopics)
+        {
+            if (!_truConfigWorkerptr->isRSURegistered(rsuIpWithAvailableTopics))
+            {
+                // If we have RSU registration for an RSU that is not in the available topics list, remove the RSU and its available topics to keep the data consistent. This can happen when an RSU is removed from the registration but we still have old available topics for it.
+                _dataSelectionTracker->removeRsuAvailableTopics(rsuIpWithAvailableTopics);
+                PLOG(logDEBUG3) << "Removed old RSU with IP " << rsuIpWithAvailableTopics << " from available topics";
+            }
+        }
         return _dataSelectionTracker->latestAvailableTopicsMessageToJsonString();
     }
 

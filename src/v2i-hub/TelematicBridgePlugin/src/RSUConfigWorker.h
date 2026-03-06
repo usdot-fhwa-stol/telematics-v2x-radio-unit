@@ -350,7 +350,7 @@ namespace TelematicBridge
          */
         std::string getEventByRsu(const std::string &rsuIp, int rsuPort) const;
 
-        std::vector<std::string> getAllRsuIps() const;
+        bool isRSURegistered(const std::string &rsuIp) const;
     };
 
 }
