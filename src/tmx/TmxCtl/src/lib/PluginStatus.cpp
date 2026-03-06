@@ -92,7 +92,7 @@ bool TmxControl::list(pluginlist &plugins, ...)
 		_output.get_storage().get_tree().clear();
 
 		std::string pwd = _pool.GetPwd();
-		DbConnection conn = _pool.Connection("tcp://127.0.0.1:3306","IVP", pwd, "IVP");
+		DbConnection conn = _pool.Connection("","IVP", pwd, "IVP");
 
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
 		for (size_t i = 0; i < plugins.size(); i++)
@@ -179,7 +179,7 @@ bool TmxControl::state(pluginlist &plugins, ...)
 
 		_output.get_storage().get_tree().clear();
 		std::string pwd = _pool.GetPwd();
-		DbConnection conn = _pool.Connection("tcp://127.0.0.1:3306","IVP", pwd, "IVP");
+		DbConnection conn = _pool.Connection("","IVP", pwd, "IVP");
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
 		for (size_t i = 0; i < plugins.size(); i++)
 		{
@@ -222,7 +222,7 @@ bool TmxControl::max_message_interval(pluginlist &plugins, ...)
 		PLOG(logDEBUG1) << "Executing query (?1 = " << val << ")" << query;
 
 		std::string pwd = _pool.GetPwd();
-		DbConnection conn = _pool.Connection("tcp://127.0.0.1:3306","IVP", pwd, "IVP");
+		DbConnection conn = _pool.Connection("","IVP", pwd, "IVP");
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
 		stmt->setString(1, val);
 		for (size_t i = 0; i < plugins.size(); i++)
@@ -277,7 +277,7 @@ bool TmxControl::args(pluginlist &plugins, ...)
 		PLOG(logDEBUG1) << "Executing query (?1 = " << val << ")" << query;
 
 		std::string pwd = _pool.GetPwd();
-		DbConnection conn = _pool.Connection("tcp://127.0.0.1:3306","IVP", pwd, "IVP");
+		DbConnection conn = _pool.Connection("","IVP", pwd, "IVP");
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
 		stmt->setString(1, val);
 		for (size_t i = 0; i < plugins.size(); i++)
@@ -307,7 +307,7 @@ bool TmxControl::messages(pluginlist &plugins, ...)
 		_output.get_storage().get_tree().clear();
 
 		std::string pwd = _pool.GetPwd();
-		DbConnection conn = _pool.Connection("tcp://127.0.0.1:3306","IVP", pwd, "IVP");
+		DbConnection conn = _pool.Connection("","IVP", pwd, "IVP");
 
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
 		for (size_t i = 0; i < plugins.size(); i++)
@@ -390,7 +390,7 @@ bool TmxControl::events(pluginlist &, ...)
 		_output.get_storage().get_tree().clear();
 
 		std::string pwd = _pool.GetPwd();
-		DbConnection conn = _pool.Connection("tcp://127.0.0.1:3306","IVP", pwd, "IVP");
+		DbConnection conn = _pool.Connection("","IVP", pwd, "IVP");
 
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
 
@@ -445,7 +445,7 @@ bool TmxControl::system_config(pluginlist &, ...)
 		_output.get_storage().get_tree().clear();
 
 		std::string pwd = _pool.GetPwd();
-		DbConnection conn = _pool.Connection("tcp://127.0.0.1:3306","IVP", pwd, "IVP");
+		DbConnection conn = _pool.Connection("","IVP", pwd, "IVP");
 		unique_ptr<Statement> stmt(conn.Get()->createStatement());
 		unique_ptr<ResultSet> rs(stmt->executeQuery(query));
 
@@ -488,7 +488,7 @@ bool TmxControl::clear_event_log(pluginlist &, ...)
 		_output.get_storage().get_tree().clear();
 
 		std::string pwd = _pool.GetPwd();
-		DbConnection conn = _pool.Connection("tcp://127.0.0.1:3306","IVP", pwd, "IVP");
+		DbConnection conn = _pool.Connection("","IVP", pwd, "IVP");
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
 		stmt->executeUpdate();
 		//unique_ptr<Statement> stmt(conn.Get()->createStatement());
@@ -524,7 +524,7 @@ bool TmxControl::user_info(bool showPassword)
 		_output.get_storage().get_tree().clear();
 
 		std::string pwd = _pool.GetPwd();
-		DbConnection conn = _pool.Connection("tcp://127.0.0.1:3306","IVP", pwd, "IVP");
+		DbConnection conn = _pool.Connection("","IVP", pwd, "IVP");
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
 		stmt->setString(1, (*_opts)["username"].as<string>());
 		unique_ptr<ResultSet> rs(stmt->executeQuery());
@@ -583,7 +583,7 @@ bool TmxControl::hashed_info()
 		_output.get_storage().get_tree().clear();
 
 		std::string pwd = _pool.GetPwd();
-		DbConnection conn = _pool.Connection("tcp://127.0.0.1:3306","IVP", pwd, "IVP");
+		DbConnection conn = _pool.Connection("","IVP", pwd, "IVP");
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
 		stmt->setString(1, (*_opts)["password"].as<string>());
 		unique_ptr<ResultSet> rs(stmt->executeQuery());
@@ -632,7 +632,7 @@ bool TmxControl::all_users_info(bool showPassword)
 		_output.get_storage().get_tree().clear();
 
 		std::string pwd = _pool.GetPwd();
-		DbConnection conn = _pool.Connection("tcp://127.0.0.1:3306","IVP", pwd, "IVP");
+		DbConnection conn = _pool.Connection("","IVP", pwd, "IVP");
 		unique_ptr<Statement> stmt(conn.Get()->createStatement());
 		unique_ptr<ResultSet> rs(stmt->executeQuery(query));
 
@@ -698,7 +698,7 @@ bool TmxControl::user_add()
 				", ?3 = " << access_level << ", ?4 = " << username << "): " << query;
 
 		std::string pwd = _pool.GetPwd();
-		DbConnection conn = _pool.Connection("tcp://127.0.0.1:3306","IVP", pwd, "IVP");
+		DbConnection conn = _pool.Connection("","IVP", pwd, "IVP");
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
 		stmt.reset(conn.Get()->prepareStatement(query));
 		stmt->setString(1, username);
@@ -767,7 +767,7 @@ bool TmxControl::user_update()
 		PLOG(logDEBUG1) << "Executing query : " << query;
 
 		std::string pwd = _pool.GetPwd();
-		DbConnection conn = _pool.Connection("tcp://127.0.0.1:3306","IVP", pwd, "IVP");
+		DbConnection conn = _pool.Connection("","IVP", pwd, "IVP");
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
 		if (havePassword)
 		{
@@ -823,7 +823,7 @@ bool TmxControl::user_delete()
 		_output.get_storage().get_tree().clear();
 
 		std::string pwd = _pool.GetPwd();
-		DbConnection conn = _pool.Connection("tcp://127.0.0.1:3306","IVP", pwd, "IVP");
+		DbConnection conn = _pool.Connection("","IVP", pwd, "IVP");
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
 		stmt->setString(1, (*_opts)["username"].as<string>());
 		int deleted = stmt->executeUpdate();

@@ -83,8 +83,8 @@ PluginClient::PluginClient(std::string name) :
 		PLOG(logDEBUG) << "Calling DB upgrader";
 		DbConnectionPool pool;
 		std::string pwd = pool.GetPwd();
-		// "tcp://127.0.0.1:3306","IVP", pwd, "IVP"
-		DbConnection conn = pool.Connection("tcp://127.0.0.1:3306","IVP", pwd, "IVP");
+		// Use connection string from pool (now reads MYSQL_HOSTNAME from environment)
+		DbConnection conn = pool.Connection("","IVP", pwd, "IVP");
 
 		PluginUpgrader::UpgradeDatabase(&conn, IVPUTILS_VERSION);
 	} catch (runtime_error &ex) {
