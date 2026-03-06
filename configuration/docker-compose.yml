@@ -27,6 +27,7 @@ services:
       - "host.docker.internal:host-gateway"
     ports:
      - "24602:24601"
+     - "26789:26789"
     restart: always
     depends_on:
       - tru_db
@@ -45,7 +46,7 @@ services:
       - SIMULATION_MODE=${SIMULATION_MODE:-false}
       - SIMULATION_IP=${SIMULATION_IP:-127.0.0.1}
       - SIMULATION_REGISTRATION_PORT=6767
-      - LOCAL_IP=${V2XHUB_IP:-192.168.55.145}
+      - LOCAL_IP=${V2XHUB_IP:-127.0.0.1}
       - MESSAGE_RECEIVER_PORT=${MESSAGE_RECEIVER_PORT:-26789}
       - TIME_SYNC_TOPIC=time_sync
       - TIME_SYNC_PORT=7575
@@ -81,6 +82,7 @@ services:
       - "host.docker.internal:host-gateway"
     ports:
       - "24601:24601"
+      - "26788:26788"
     restart: always
     depends_on:
       - tru_db
@@ -99,8 +101,8 @@ services:
       - SIMULATION_MODE=${SIMULATION_MODE:-false}
       - SIMULATION_IP=${SIMULATION_IP:-127.0.0.1}
       - SIMULATION_REGISTRATION_PORT=6767
-      - LOCAL_IP=${V2XHUB_IP:-192.168.55.145}
-      - MESSAGE_RECEIVER_PORT=${MESSAGE_RECEIVER_PORT:-26788}
+      - LOCAL_IP=${V2XHUB_IP:-127.0.0.1}
+      - MESSAGE_RECEIVER_PORT=${MESSAGE_RECEIVER_PORT_INSTANCE_2:-26788}
       - TIME_SYNC_TOPIC=time_sync
       - TIME_SYNC_PORT=7575
       - SIM_V2X_PORT=5757
