@@ -373,7 +373,6 @@ void MessageReceiverPlugin::UpdateConfigSettings()
 	GetConfigValue<unsigned int>("EnableVerification", verState);
 	GetConfigValue<string>("HSMurl",baseurl);
 	GetConfigValue<string>("messageid",messageidstr);
-	GetConfigValue("Port", port);
 	_skippedSignVerifyErrorResponse = 0;
 	SetStatus<uint>(Key_SkippedSignVerifyError, _skippedSignVerifyErrorResponse);
 
@@ -388,6 +387,7 @@ void MessageReceiverPlugin::UpdateConfigSettings()
 		ip = "127.0.0.1";
 	}
 
+	// Temporary fix to expose the message receiver port as an environment variable.
 	if (const char* env_p = std::getenv("MESSAGE_RECEIVER_PORT")) {
 		try {
 			unsigned long value = std::stoul(env_p);
