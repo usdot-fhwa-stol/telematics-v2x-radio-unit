@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <chrono>
+#include <algorithm>
 #include <jsoncpp/json/json.h>
 #include "UnitHealthStatusMessage.h"
 #include "RSUHealthStatusMessage.h"

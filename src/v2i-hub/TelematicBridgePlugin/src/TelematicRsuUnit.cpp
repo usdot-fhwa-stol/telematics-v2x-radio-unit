@@ -152,7 +152,10 @@ namespace TelematicBridge
         {
             // Synchronize the RSU registration update with the RSU health status to ensure we remove the correct RSU status when an RSU is removed from the registration. This can happen when we receive an RSU status update for an RSU that has been removed from the registration but we still have old status for it.
             auto registeredRsuIps = _truConfigWorkerptr->getAllRsuIps();
-            for (const auto &rsuStatus : _truHealthStatusTracker->getSnapshot().getRsuHealthStatus())
+            
+            // Store snapshot to avoid dangling reference to temporary object
+            auto snapshot = _truHealthStatusTracker->getSnapshot();
+            for (const auto &rsuStatus : snapshot.getRsuHealthStatus())
             {
                 if (std::find(registeredRsuIps.begin(), registeredRsuIps.end(), rsuStatus.getIp()) == registeredRsuIps.end())
                 {
@@ -163,7 +166,9 @@ namespace TelematicBridge
             }
 
             // Synchronize the RSU registration update with the RSUs in available topics to ensure available topics are up to date when we reply to the request
-            for (const auto &rsuIpWithAvailableTopics : _dataSelectionTracker->getLatestRSUIpsWithAvailableTopics())
+            // Store RSU IPs to avoid dangling reference to temporary object
+            auto rsuIpsWithAvailableTopics = _dataSelectionTracker->getLatestRSUIpsWithAvailableTopics();
+            for (const auto &rsuIpWithAvailableTopics : rsuIpsWithAvailableTopics)
             {
                 if (std::find(registeredRsuIps.begin(), registeredRsuIps.end(), rsuIpWithAvailableTopics) == registeredRsuIps.end())
                 {

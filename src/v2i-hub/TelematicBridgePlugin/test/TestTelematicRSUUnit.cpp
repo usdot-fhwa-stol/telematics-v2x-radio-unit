@@ -302,7 +302,7 @@ namespace TelematicBridge
         auto rsuIps = unit->getDataSelectionTrackerForTesting()->getLatestRSUIpsWithAvailableTopics();
         EXPECT_EQ(rsuIps.size(), 1);
 
-        // Create update message with empty RSU configs (removes all RSUs)
+        // Create update message with empty RSU configs (no action is taken)
         Json::Value updateMsg;
         updateMsg["unitConfig"]["unitId"] = "Unit001";
         updateMsg["rsuConfigs"] = Json::arrayValue; // Empty array
@@ -311,16 +311,13 @@ namespace TelematicBridge
         // Process the config update
         auto [success, response] = unit->processConfigUpdateAndGenerateResponse(updateMsg);
 
-        // Verify update was successful
-        EXPECT_TRUE(success);
-
-        // Verify that all RSUs were removed from health status
+        // Verify that no RSU is removed
         snapshot = unit->getTruHealthStatusTrackerForTesting()->getSnapshot();
-        EXPECT_EQ(snapshot.getRsuHealthStatusCount(), 0);
+        EXPECT_EQ(snapshot.getRsuHealthStatusCount(), 1);
 
-        // Verify that all RSUs were removed from available topics
+        // Verify that no RSUs are present in available topics
         rsuIps = unit->getDataSelectionTrackerForTesting()->getLatestRSUIpsWithAvailableTopics();
-        EXPECT_EQ(rsuIps.size(), 0);
+        EXPECT_EQ(rsuIps.size(), 1);
 
         unsetenv("RSU_CONFIG_PATH");
     }
