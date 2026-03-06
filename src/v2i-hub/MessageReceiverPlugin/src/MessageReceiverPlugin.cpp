@@ -387,7 +387,7 @@ void MessageReceiverPlugin::UpdateConfigSettings()
 		ip = "127.0.0.1";
 	}
 
-	// Temporary fix to expose the message receiver port as an environment variable.
+	// Temporary fix to expose the message receiver port in order to allow users to use multiple TRUs on the same host machine.
 	if (const char* env_p = std::getenv("MESSAGE_RECEIVER_PORT")) {
 		try {
 			unsigned long value = std::stoul(env_p);
