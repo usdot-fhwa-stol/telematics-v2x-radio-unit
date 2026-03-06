@@ -9,6 +9,8 @@ services:
       - MYSQL_USER=IVP
       - MYSQL_PASSWORD_FILE=/run/secrets/mysql_password
       - MYSQL_RANDOM_ROOT_PASSWORD=yes
+    ports:
+      - "3306:3306"
     secrets:
       - mysql_password
     volumes:
@@ -104,8 +106,9 @@ services:
       - SIM_V2X_PORT=5757
       - SIM_INTERACTION_PORT=7576
       - V2X_PORT=8686
-      - MYSQL_HOST=tru_db
+      - MYSQL_HOSTNAME=tru_db
       - MYSQL_USER=IVP
+      - MYSQL_DATABASE=IVP
       - INFRASTRUCTURE_ID=${INFRASTRUCTURE_ID:-rsu_1234}
       - INFRASTRUCTURE_NAME=${INFRASTRUCTURE_NAME:-East Intersection}
       - SENSOR_JSON_FILE_PATH=${SENSOR_JSON_FILE_PATH:-/var/www/download/sensors.json}
