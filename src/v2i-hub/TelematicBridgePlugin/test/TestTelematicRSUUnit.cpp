@@ -315,6 +315,9 @@ namespace TelematicBridge
         snapshot = unit->getTruHealthStatusTrackerForTesting()->getSnapshot();
         EXPECT_EQ(snapshot.getRsuHealthStatusCount(), 1);
 
+        // Trigger available topics sync by constructing the reply
+        unit->constructRsuAvailableTopicsReplyString();
+
         // Verify that no RSUs are removed in available topics
         rsuIps = unit->getDataSelectionTrackerForTesting()->getLatestRSUIpsWithAvailableTopics();
         EXPECT_EQ(rsuIps.size(), 1);
@@ -364,6 +367,9 @@ namespace TelematicBridge
         // Verify that RSU 192.168.1.10 was removed from health status
         snapshot = unit->getTruHealthStatusTrackerForTesting()->getSnapshot();
         EXPECT_EQ(snapshot.getRsuHealthStatusCount(), 0);
+
+        // Trigger available topics sync by constructing the reply
+        unit->constructRsuAvailableTopicsReplyString();
 
         // Verify that RSU 192.168.1.10 was removed from available topics
         rsuIps = unit->getDataSelectionTrackerForTesting()->getLatestRSUIpsWithAvailableTopics();
@@ -435,6 +441,9 @@ namespace TelematicBridge
         EXPECT_EQ(snapshot.getRsuHealthStatusCount(), 1);
         const auto& rsuStatuses = snapshot.getRsuHealthStatus();
         EXPECT_EQ(rsuStatuses[0].getIp(), "192.168.1.10");
+
+        // Trigger available topics sync by constructing the reply
+        unit->constructRsuAvailableTopicsReplyString();
 
         // Verify that only RSU 192.168.1.10 remains in available topics
         rsuIps = unit->getDataSelectionTrackerForTesting()->getLatestRSUIpsWithAvailableTopics();
@@ -517,6 +526,9 @@ namespace TelematicBridge
         const auto& rsuStatuses = snapshot.getRsuHealthStatus();
         EXPECT_EQ(rsuStatuses[0].getIp(), "192.168.1.10");
 
+        // Trigger available topics sync by constructing the reply
+        unit->constructRsuAvailableTopicsReplyString();
+
         // Verify that only RSU 192.168.1.10 remains in available topics
         rsuIps = unit->getDataSelectionTrackerForTesting()->getLatestRSUIpsWithAvailableTopics();
         EXPECT_EQ(rsuIps.size(), 1);
@@ -567,6 +579,9 @@ namespace TelematicBridge
         // Verify that RSU 192.168.1.10 was removed from health status
         snapshot = unit->getTruHealthStatusTrackerForTesting()->getSnapshot();
         EXPECT_EQ(snapshot.getRsuHealthStatusCount(), 0);
+
+        // Trigger available topics sync by constructing the reply
+        unit->constructRsuAvailableTopicsReplyString();
 
         // Verify that RSU 192.168.1.10 was removed from available topics
         rsuIps = unit->getDataSelectionTrackerForTesting()->getLatestRSUIpsWithAvailableTopics();
