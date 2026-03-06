@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <chrono>
+#include <algorithm>
 #include <jsoncpp/json/json.h>
 #include "UnitHealthStatusMessage.h"
 #include "RSUHealthStatusMessage.h"
@@ -220,6 +221,13 @@ namespace TelematicBridge
         bool operator!=(const TRUHealthStatusMessage &other) const
         {
             return !(*this == other);
+        }
+
+        void removeRsuStatus(const std::string &rsuIp){
+            rsuHealthStatus.erase(
+                std::remove_if(rsuHealthStatus.begin(), rsuHealthStatus.end(),
+                               [&rsuIp](const RSUHealthStatusMessage &status) { return status.getIp() == rsuIp; }),
+                rsuHealthStatus.end());
         }
     };
 

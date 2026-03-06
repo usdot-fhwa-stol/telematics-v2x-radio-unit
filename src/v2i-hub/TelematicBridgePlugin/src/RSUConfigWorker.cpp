@@ -460,4 +460,11 @@ namespace TelematicBridge
             return 0; // Return 0 or an appropriate default value if RSU not found
         }
     }
+
+
+    bool truConfigWorker::isRSURegistered(const std::string &rsuIp) const
+    {
+        std::lock_guard<std::mutex> lock(_configMutex);
+        return _truRegistrationMap.find(rsuIp) != _truRegistrationMap.end();
+    }
 }

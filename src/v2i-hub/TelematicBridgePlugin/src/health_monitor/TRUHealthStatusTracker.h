@@ -95,6 +95,16 @@ namespace TelematicBridge
             std::lock_guard<std::mutex> lock(_statusMutex);
             return _truHealthStatus;
         }
+
+        /**
+         * @brief Remove an RSU status by RSU IP
+         * @param rsuIp The RSU IP to remove (format: "ip")
+         */
+        void removeRsuStatus(const std::string &rsuIp)
+        {
+            std::lock_guard<std::mutex> lock(_statusMutex);
+            _truHealthStatus.removeRsuStatus(rsuIp);
+        }
     };
 
 } // namespace TelematicBridgePlugin
