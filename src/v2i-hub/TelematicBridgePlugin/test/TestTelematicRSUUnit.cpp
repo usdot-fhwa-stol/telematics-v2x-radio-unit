@@ -280,9 +280,9 @@ namespace TelematicBridge
     }
 
     /**
-     * @brief Test synchronization when all RSUs are removed from registration
+     * @brief Test synchronization when no RSUs are removed from registration
      */
-    TEST_F(TestTelematicRsuUnit, SynchronizeRemoveAll_ClearsAllRsus)
+    TEST_F(TestTelematicRsuUnit, SynchronizeRemoveNone_AllRsus)
     {
         // Setup initial config with RSU 192.168.1.10
         createFile("/tmp/test_config.json", getValidConfig());
@@ -315,7 +315,7 @@ namespace TelematicBridge
         snapshot = unit->getTruHealthStatusTrackerForTesting()->getSnapshot();
         EXPECT_EQ(snapshot.getRsuHealthStatusCount(), 1);
 
-        // Verify that no RSUs are present in available topics
+        // Verify that no RSUs are removed in available topics
         rsuIps = unit->getDataSelectionTrackerForTesting()->getLatestRSUIpsWithAvailableTopics();
         EXPECT_EQ(rsuIps.size(), 1);
 
