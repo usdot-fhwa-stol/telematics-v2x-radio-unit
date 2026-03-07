@@ -26,8 +26,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-     - "24602:24601"
-     - "26789:26789"
+     - "24602:24601/udp"
+     - "26789:26789/udp"
     restart: always
     depends_on:
       - tru_db
@@ -81,8 +81,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "24601:24601"
-      - "26788:26788"
+      - "24601:24601/udp"
+      - "26788:26788/udp"
     restart: always
     depends_on:
       - tru_db
