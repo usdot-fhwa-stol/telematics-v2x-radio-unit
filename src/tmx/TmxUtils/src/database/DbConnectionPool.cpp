@@ -20,7 +20,12 @@ vector<DbConnection> DbConnectionPool::pool;
 
 std::mutex lock;
 
-DbConnectionPool::DbConnectionPool(): _connectStr("tcp://127.0.0.1:3306") {}
+DbConnectionPool::DbConnectionPool() {
+	// Read MYSQL_HOSTNAME from environment, default to 127.0.0.1 for backward compatibility
+	const char* hostname = std::getenv("MYSQL_HOSTNAME");
+	std::string host = (hostname != nullptr) ? std::string(hostname) : "127.0.0.1";
+	_connectStr = "tcp://" + host + ":3306";
+}
 
 DbConnection DbConnectionPool::Connection(string connectionUrl, string username, string password, string db) {
 	lock_guard<mutex> lg(lock);

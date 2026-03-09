@@ -373,6 +373,7 @@ void MessageReceiverPlugin::UpdateConfigSettings()
 	GetConfigValue<unsigned int>("EnableVerification", verState);
 	GetConfigValue<string>("HSMurl",baseurl);
 	GetConfigValue<string>("messageid",messageidstr);
+	GetConfigValue("Port", port);
 	_skippedSignVerifyErrorResponse = 0;
 	SetStatus<uint>(Key_SkippedSignVerifyError, _skippedSignVerifyErrorResponse);
 
@@ -385,23 +386,6 @@ void MessageReceiverPlugin::UpdateConfigSettings()
 	else{
 		PLOG(logERROR) << "IP not specified, using 127.0.0.1";
 		ip = "127.0.0.1";
-	}
-
-	// Temporary fix to expose the message receiver port in order to allow users to use multiple TRUs on the same host machine.
-	if (const char* env_p = std::getenv("MESSAGE_RECEIVER_PORT")) {
-		try {
-			unsigned long value = std::stoul(env_p);
-
-			if (value > std::numeric_limits<unsigned short>::max()) {
-				PLOG(logERROR) << "MESSAGE_RECEIVER_PORT out of range, using 26789";
-			} else {
-				port = static_cast<unsigned short>(value);
-			}
-		} catch (const std::exception& e) {
-			PLOG(logERROR) << "Invalid MESSAGE_RECEIVER_PORT, using 26789";
-		}
-	} else {
-		PLOG(logERROR) << "Port not specified, using 26789";
 	}
 
 	std::string request="verifySig";
