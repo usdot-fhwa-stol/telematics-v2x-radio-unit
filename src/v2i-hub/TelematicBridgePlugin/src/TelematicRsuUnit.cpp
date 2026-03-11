@@ -150,7 +150,7 @@ namespace TelematicBridge
 
         if (isSuccessful)
         {
-            // Clear all RSU health statuses after a config update. If an RSU's config was updated
+            // Clear all RSU health statuses after a config update or delete. If an RSU's config was updated
             // to an incorrect configuration, it will no longer report status. Clearing ensures stale
             // health data doesn't persist. RSUs with valid configs will naturally re-report their status.
             auto snapshot = _truHealthStatusTracker->getSnapshot();
