@@ -160,5 +160,15 @@ namespace RSUHealthMonitor
             else
                 return "off"; // Default to "off" for unknown status values
         }
+
+        Json::Value createUnAvailableRSUStatusJson(const std::string &rsuIp, const uint16_t &snmpPort, const std::string &event) const
+        {
+            Json::Value rsuStatusJson;
+            rsuStatusJson["rsuIpAddress"] = rsuIp;
+            rsuStatusJson["rsuSnmpPort"] = snmpPort;
+            rsuStatusJson["event"] = event;
+            rsuStatusJson["rsuMode"] = "unavailable";
+            return rsuStatusJson;
+        }
     };
 } // namespace RSUHealthMonitor
