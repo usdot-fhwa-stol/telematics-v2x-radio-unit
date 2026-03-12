@@ -39,7 +39,7 @@ namespace RSUHealthMonitor
                 PLOG(logERROR) << "Failed to CONNECT to at RSU IP: " << rsuConfig.rsuIp << " due to error: " << ex.what();
                 SetStatus<std::string>(statusKey.c_str(), DISCONNECTED);
                 // Create RSUStatusMessage for RSU disconnection
-                Json::Value rsuStatusJson = _rsuWorker->createUnAvailableRSUStatusJson(rsuConfig.rsuIp, std::to_string(rsuConfig.snmpPort), rsuConfig.event);
+                Json::Value rsuStatusJson = _rsuWorker->createUnAvailableRSUStatusJson(rsuConfig.rsuIp, rsuConfig.snmpPort, rsuConfig.event);
                 auto unAvailableRSUStatusMsg = _rsuWorker->convertJsonToTMXMsg(rsuStatusJson);
                 BroadcastMessage(unAvailableRSUStatusMsg, RSUHealthMonitorPlugin::GetName());
             }
