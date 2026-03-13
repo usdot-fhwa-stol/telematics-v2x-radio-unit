@@ -135,4 +135,28 @@ namespace RSUHealthMonitor
         EXPECT_EQ("off", _rsuWorker->RSU41RsuModeToString("5"));
     }
 
+    TEST_F(test_RSUHealthMonitorWorker, createUnAvailableRSUStatusJson)
+    {
+        std::string testRsuIp = "192.168.1.100";
+        uint16_t testSnmpPort = 161;
+        std::string testEvent = "RSU connection timeout";
+
+        Json::Value result = _rsuWorker->createUnAvailableRSUStatusJson(testRsuIp, testSnmpPort, testEvent);
+
+        // Verify all expected fields are present
+        EXPECT_TRUE(result.isMember("rsuIpAddress"));
+        EXPECT_TRUE(result.isMember("rsuSnmpPort"));
+        EXPECT_TRUE(result.isMember("event"));
+        EXPECT_TRUE(result.isMember("rsuMode"));
+
+        // Verify field values
+        EXPECT_EQ(testRsuIp, result["rsuIpAddress"].asString());
+        EXPECT_EQ(testSnmpPort, result["rsuSnmpPort"].asUInt());
+        EXPECT_EQ(testEvent, result["event"].asString());
+        EXPECT_EQ("unavailable", result["rsuMode"].asString());
+
+        // Verify only these 4 fields are present
+        EXPECT_EQ(4, result.getMemberNames().size());
+    }
+
 }
