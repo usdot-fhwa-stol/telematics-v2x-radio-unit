@@ -150,16 +150,14 @@ namespace TelematicBridge
 
         if (isSuccessful)
         {
-            // Synchronize the RSU registration update with the RSU health status to ensure we remove the correct RSU status when an RSU is removed from the registration. This can happen when we receive an RSU status update for an RSU that has been removed from the registration but we still have old status for it.
+            // Clear all RSU health statuses after a config update or delete. If an RSU's config was updated
+            // to an incorrect configuration, it will no longer report status. Clearing ensures stale
+            // health data doesn't persist. RSUs with valid configs will naturally re-report their status.
             auto snapshot = _truHealthStatusTracker->getSnapshot();
             for (const auto &rsuStatus : snapshot.getRsuHealthStatus())
             {
-                if (!_truConfigWorkerptr->isRSURegistered(rsuStatus.getIp()))
-                {
-                    // If we have an RSU status for an RSU that is not in the registration list, remove the RSU status to keep the data consistent.
-                    _truHealthStatusTracker->removeRsuStatus(rsuStatus.getIp());
-                    PLOG(logDEBUG3) << "Removed old RSU with IP " << rsuStatus.getIp() << " from health status";
-                }
+                _truHealthStatusTracker->removeRsuStatus(rsuStatus.getIp());
+                PLOG(logDEBUG3) << "Cleared RSU health status for IP " << rsuStatus.getIp() << " after config update";
             }
         }
 
