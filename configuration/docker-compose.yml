@@ -63,6 +63,7 @@ services:
       - IS_TRU=TRUE                                                  # Enable TRU mode
       - NATS_URL=nats://host.docker.internal:4222                              # NATS server URL
       - RSU_CONFIG_PATH=/var/www/plugins/rsuConfigs.json
+      - PERF_METRICS_ENABLED=${PERF_METRICS_ENABLED:-false}
     secrets:
       - mysql_password
     volumes:
@@ -117,6 +118,7 @@ services:
       - IS_TRU=TRUE                                                  # Enable TRU mode
       - NATS_URL=nats://host.docker.internal:4222                              #
       - RSU_CONFIG_PATH=/var/www/plugins/rsuConfigs.json
+      - PERF_METRICS_ENABLED=${PERF_METRICS_ENABLED:-false}
     secrets:
       - mysql_password
     volumes:
