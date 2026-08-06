@@ -12,6 +12,11 @@ namespace RSUHealthMonitor
         _rsuStatusTimer = std::make_unique<ThreadTimer>();
         _rsuConfigListPtr = std::make_shared<RSUConfigurationList>();
         
+        // Subscribe to RSURegistrationConfigMessage
+        AddMessageFilter<tmx::messages::RSURegistrationConfigMessage>(this, &RSUHealthMonitorPlugin::OnRSURegistrationConfigMessage);
+        
+        SubscribeToMessages();
+        UpdateConfigSettings();
     }
 
     void RSUHealthMonitorPlugin::monitorRSUs()
@@ -24,7 +29,7 @@ namespace RSUHealthMonitor
                 _rsuConnectedStatusKeys.push_back(statusKey);
             }
             try {
-                auto rsuStatusJson = _rsuWorker->getRSUStatus(rsuConfig.mibVersion, rsuConfig.rsuIp, rsuConfig.snmpPort, rsuConfig.user, rsuConfig.authProtocol, rsuConfig.authPassPhrase, rsuConfig.privProtocol, rsuConfig.privPassPhrase, rsuConfig.securityLevel, SEC_TO_MICRO);
+                auto rsuStatusJson = _rsuWorker->getRSUStatus(rsuConfig.mibVersion, rsuConfig.rsuIp, rsuConfig.snmpPort, rsuConfig.user, rsuConfig.authProtocol, rsuConfig.authPassPhrase, rsuConfig.privProtocol, rsuConfig.privPassPhrase, rsuConfig.securityLevel, rsuConfig.event, SEC_TO_MICRO);
                 BroadcastRSUStatus(rsuStatusJson, rsuConfig.mibVersion);
                 SetStatus<std::string>(statusKey.c_str(), CONNECTED);
 
@@ -33,12 +38,10 @@ namespace RSUHealthMonitor
             {
                 PLOG(logERROR) << "Failed to CONNECT to at RSU IP: " << rsuConfig.rsuIp << " due to error: " << ex.what();
                 SetStatus<std::string>(statusKey.c_str(), DISCONNECTED);
-                // Create TmxEventLogMessage for RSU disconnection
-                tmx::messages::TmxEventLogMessage eventLogMsg;
-                eventLogMsg.set_level(IvpLogLevel::IvpLogLevel_error);
-                eventLogMsg.set_description("Failed to CONNECT to at RSU IP: " + rsuConfig.rsuIp + " due to error: " + ex.what());
-                BroadcastMessage(eventLogMsg, RSUHealthMonitorPlugin::GetName());
-
+                // Create RSUStatusMessage for RSU disconnection
+                Json::Value rsuStatusJson = _rsuWorker->createUnAvailableRSUStatusJson(rsuConfig.rsuIp, rsuConfig.snmpPort, rsuConfig.event);
+                auto unAvailableRSUStatusMsg = _rsuWorker->convertJsonToTMXMsg(rsuStatusJson);
+                BroadcastMessage(unAvailableRSUStatusMsg, RSUHealthMonitorPlugin::GetName());
             }
         }
     }
@@ -112,6 +115,25 @@ namespace RSUHealthMonitor
                 BroadcastMessage(sendRsuStatusMsg, RSUHealthMonitorPlugin::GetName());
             }
         }
+    }
+
+    void RSUHealthMonitorPlugin::OnRSURegistrationConfigMessage(tmx::messages::RSURegistrationConfigMessage &msg, routeable_message &routeableMsg)
+    {
+        // Update the monitor interval from the message
+        uint16_t newInterval = msg.get_unitConfig().rsuStatusMonitorInterval;
+        if (newInterval > 0 && newInterval != _interval)
+        {
+            _interval = newInterval;
+            PLOG(logINFO) << "Updated RSU status monitor interval to: " << _interval << " seconds";
+            
+            if (started && _rsuStatusTimer)
+            {
+                _rsuStatusTimer->ChangeFrequency(_timerThId, std::chrono::milliseconds(_interval * SEC_TO_MILLI));
+            }
+        }        
+        _rsuConfigListPtr->parseRSUs(msg);
+        PLOG(logINFO) << "Successfully updated RSU configurations. Total RSUs: " << _rsuConfigListPtr->getConfigs().size();
+        
     }
 
 } // namespace RSUHealthMonitor

@@ -155,7 +155,9 @@ int main()
 {
 
 	std::string env_p = GetPwd();
-	DbContext::ConnectionInformation.url = "127.0.0.1";
+	// Read MYSQL_HOSTNAME from environment, default to 127.0.0.1 for backward compatibility
+	const char* hostname = std::getenv("MYSQL_HOSTNAME");
+	DbContext::ConnectionInformation.url = (hostname != nullptr) ? std::string(hostname) : "127.0.0.1";
 	DbContext::ConnectionInformation.username = "IVP";
 	DbContext::ConnectionInformation.password = env_p;
 	DbContext::ConnectionInformation.db = "IVP";

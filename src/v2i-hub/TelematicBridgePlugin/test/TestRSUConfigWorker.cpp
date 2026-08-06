@@ -1,0 +1,858 @@
+#include <gtest/gtest.h>
+#include "RSUConfigWorker.h"
+#include <fstream>
+#include <memory>
+
+using namespace TelematicBridge;
+using namespace std;
+
+namespace TelematicBridge
+{
+    class TestRSUConfigWorker : public ::testing::Test
+    {
+    protected:
+        shared_ptr<truConfigWorker> worker;
+
+        void SetUp() override
+        {
+            worker = make_shared<truConfigWorker>();
+        }
+
+        void TearDown() override
+        {
+            worker.reset();
+            removeTestFile("/tmp/test_tru_config.json");
+        }
+
+        // Helper to create test config file
+        void createTestConfigFile(const string& path, const string& content)
+        {
+            ofstream file(path);
+            file << content;
+            file.close();
+        }
+
+        // Helper to remove test files
+        void removeTestFile(const string& path)
+        {
+            remove(path.c_str());
+        }
+
+        // Helper to create valid RSU config JSON
+        Json::Value createValidRsuConfigJson()
+        {
+            Json::Value config;
+            config["action"] = "add";
+            config["event"] = "startup";
+
+            Json::Value rsu;
+            rsu["ip"] = "192.168.1.10";
+            rsu["port"] = 161;
+            config["rsu"] = rsu;
+
+            Json::Value snmp;
+            snmp["user"] = "admin";
+            snmp["privacyProtocol"] = "AES";
+            snmp["authProtocol"] = "SHA";
+            snmp["authPassPhrase"] = "pass123";
+            snmp["privacyPassPhrase"] = "priv123";
+            snmp["rsuMibVersion"] = "4.1";
+            snmp["securityLevel"] = "authPriv";
+            config["snmp"] = snmp;
+
+            return config;
+        }
+
+        // Helper to create valid complete config file content
+        string getValidCompleteConfigFileContent()
+        {
+            return R"({
+                "unitConfig": 
+                    {
+                        "unitId": "Unit001",
+                        "name": "TestUnit",
+                        "maxConnections": 2,
+                        "bridgePluginHeartbeatInterval": 30,
+                        "healthMonitorPluginHeartbeatInterval": 60,
+                        "rsuStatusMonitorInterval": 120
+                    },
+                "rsuConfigs": [
+                    {
+                        "action": "add",
+                        "event": "startup",
+                        "rsu": {
+                            "ip": "192.168.1.10",
+                            "port": 161
+                        },
+                        "snmp": {
+                            "user": "admin",
+                            "privacyProtocol": "AES",
+                            "authProtocol": "SHA",
+                            "authPassPhrase": "pass123",
+                            "privacyPassPhrase": "priv123",
+                            "rsuMibVersion": "4.1",
+                            "securityLevel": "authPriv"
+                        }
+                    }
+                ],
+                "timestamp": 1234567890
+            })";
+        }
+    };
+
+    // ==================== Action Conversion Tests ====================
+
+    TEST_F(TestRSUConfigWorker, TestStringToActionAdd)
+    {
+        Json::Value config = createValidRsuConfigJson();
+        config["action"] = "add";
+
+        rsuConfig rsu;
+        bool result = worker->jsonValueToRsuConfig(config, rsu);
+
+        EXPECT_TRUE(result);
+        EXPECT_EQ(rsu.actionType, action::add);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestStringToActionDelete)
+    {
+        Json::Value config = createValidRsuConfigJson();
+        config["action"] = "delete";
+
+        rsuConfig rsu;
+        bool result = worker->jsonValueToRsuConfig(config, rsu);
+
+        EXPECT_TRUE(result);
+        EXPECT_EQ(rsu.actionType, action::remove);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestStringToActionUnknown)
+    {
+        Json::Value config = createValidRsuConfigJson();
+        config["action"] = "invalid_action";
+
+        rsuConfig rsu;
+        bool result = worker->jsonValueToRsuConfig(config, rsu);
+
+        EXPECT_TRUE(result);
+        EXPECT_EQ(rsu.actionType, action::unknown);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestStringToActionCreate)
+    {
+        Json::Value config = createValidRsuConfigJson();
+        config["action"] = "create";
+
+        rsuConfig rsu;
+        bool result = worker->jsonValueToRsuConfig(config, rsu);
+
+        EXPECT_TRUE(result);
+        EXPECT_EQ(rsu.actionType, action::add);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestStringToActionRemove)
+    {
+        Json::Value config = createValidRsuConfigJson();
+        config["action"] = "remove";
+
+        rsuConfig rsu;
+        bool result = worker->jsonValueToRsuConfig(config, rsu);
+
+        EXPECT_TRUE(result);
+        EXPECT_EQ(rsu.actionType, action::remove);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestStringToActionUpdate)
+    {
+        Json::Value config = createValidRsuConfigJson();
+        config["action"] = "update";
+
+        rsuConfig rsu;
+        bool result = worker->jsonValueToRsuConfig(config, rsu);
+
+        EXPECT_TRUE(result);
+        EXPECT_EQ(rsu.actionType, action::update);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestActionDefaultsToAdd)
+    {
+        Json::Value config = createValidRsuConfigJson();
+        config.removeMember("action");  // Remove action key
+
+        rsuConfig rsu;
+        bool result = worker->jsonValueToRsuConfig(config, rsu);
+
+        EXPECT_TRUE(result);
+        EXPECT_EQ(rsu.actionType, action::add);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestJsonValueToRsuConfigSuccess)
+    {
+        Json::Value config = createValidRsuConfigJson();
+        rsuConfig rsu;
+
+        bool result = worker->jsonValueToRsuConfig(config, rsu);
+
+        EXPECT_TRUE(result);
+        EXPECT_EQ(rsu.event, "startup");
+        EXPECT_EQ(rsu.rsu.ip, "192.168.1.10");
+        EXPECT_EQ(rsu.rsu.port, 161);
+        EXPECT_EQ(rsu.snmp.userKey, "admin");
+    }
+
+    TEST_F(TestRSUConfigWorker, TestJsonValueToRsuConfigMissingEvent)
+    {
+        Json::Value config = createValidRsuConfigJson();
+        config.removeMember("event");
+
+        rsuConfig rsu;
+        bool result = worker->jsonValueToRsuConfig(config, rsu);
+
+        EXPECT_FALSE(result);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestJsonValueToRsuConfigMissingRsuObject)
+    {
+        Json::Value config = createValidRsuConfigJson();
+        config.removeMember("rsu");
+
+        rsuConfig rsu;
+        bool result = worker->jsonValueToRsuConfig(config, rsu);
+
+        EXPECT_FALSE(result);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestJsonValueToRsuConfigMissingSnmpObject)
+    {
+        Json::Value config = createValidRsuConfigJson();
+        config.removeMember("snmp");
+
+        rsuConfig rsu;
+        bool result = worker->jsonValueToRsuConfig(config, rsu);
+
+        EXPECT_FALSE(result);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestJsonValueToRsuConfigDefaultPort)
+    {
+        Json::Value config = createValidRsuConfigJson();
+        config["rsu"].removeMember("port");
+
+        rsuConfig rsu;
+        bool result = worker->jsonValueToRsuConfig(config, rsu);
+
+        EXPECT_TRUE(result);
+        EXPECT_EQ(rsu.rsu.port, 8080);  // Default port
+    }
+
+    TEST_F(TestRSUConfigWorker, TestJsonValueToRsuConfigInvalidRsuType)
+    {
+        Json::Value config = createValidRsuConfigJson();
+        config["rsu"] = "not_an_object";  // Wrong type
+
+        rsuConfig rsu;
+        bool result = worker->jsonValueToRsuConfig(config, rsu);
+
+        EXPECT_FALSE(result);
+    }
+
+    // ==================== loadRSUConfigListFromFile Tests ====================
+
+    TEST_F(TestRSUConfigWorker, TestLoadRSUConfigListFromFileSuccess)
+    {
+        string fakePath = "";
+        EXPECT_FALSE(worker->loadRSUConfigListFromFile(fakePath));
+
+        string testPath = "/tmp/test_tru_config.json";
+        createTestConfigFile(testPath, getValidCompleteConfigFileContent());
+
+        bool result = worker->loadRSUConfigListFromFile(testPath);
+
+        EXPECT_TRUE(result);
+
+        // Verify loaded config
+        string unitId = worker->getUnitId();
+        int pluginHeartBeatInterval = worker->getPluginHeartBeatInterval();
+        EXPECT_EQ(pluginHeartBeatInterval, 30);
+        EXPECT_EQ(unitId, "Unit001");
+    }
+
+    TEST_F(TestRSUConfigWorker, TestLoadRSUConfigListFromFileNotFound)
+    {
+        bool result = worker->loadRSUConfigListFromFile("/nonexistent/path.json");
+
+        EXPECT_FALSE(result);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestLoadRSUConfigListFromFileInvalidJson)
+    {
+        string testPath = "/tmp/test_tru_config_invalid.json";
+        createTestConfigFile(testPath, "{invalid json}");
+
+        bool result = worker->loadRSUConfigListFromFile(testPath);
+
+        EXPECT_FALSE(result);
+
+        removeTestFile(testPath);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestLoadRSUConfigListFromFileMissingKeys)
+    {
+        string testPath = "/tmp/test_tru_config_minimal.json";
+        createTestConfigFile(testPath, R"({"someOtherKey": "value"})");
+
+        // Should succeed but not load anything
+        bool result = worker->loadRSUConfigListFromFile(testPath);
+
+        removeTestFile(testPath);
+    }
+
+    // ==================== updateTRUStatus Tests ====================
+
+    TEST_F(TestRSUConfigWorker, TestUpdateTRUStatusSuccess)
+    {
+        // Load initial config to set unit ID
+        string testPath = "/tmp/test_tru_config.json";
+        createTestConfigFile(testPath, getValidCompleteConfigFileContent());
+        worker->loadRSUConfigListFromFile(testPath);
+        removeTestFile(testPath);
+
+        // Create complete valid message
+        Json::Value updateMessage;
+        Json::Value unitConfig;
+        unitConfig["unitId"] = "Unit001";
+        updateMessage["unitConfig"] = unitConfig;
+
+        Json::Value rsuConfig = createValidRsuConfigJson();
+        updateMessage["rsuConfigs"].append(rsuConfig);
+        updateMessage["timestamp"] = 1234567890;
+
+        bool result = worker->updateTRUStatus(updateMessage);
+
+        EXPECT_TRUE(result);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestUpdateTRUStatusMissingUnitConfig)
+    {
+        Json::Value updateMessage;
+        updateMessage["rsuConfigs"].append(createValidRsuConfigJson());
+        updateMessage["timestamp"] = 1234567890;
+
+        bool result = worker->updateTRUStatus(updateMessage);
+
+        EXPECT_FALSE(result);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestUpdateTRUStatusMissingRsuConfigs)
+    {
+        Json::Value message;
+        message["unitConfig"]["unitId"] = "Unit001";
+        message["timestamp"] = 1234567890;
+        // Missing rsuConfigs
+
+        bool result = worker->updateTRUStatus(message);
+
+        EXPECT_FALSE(result);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestUpdateTRUStatusMissingTimestamp)
+    {
+        string testPath = "/tmp/test_tru_config_mismatch.json";
+        createTestConfigFile(testPath, getValidCompleteConfigFileContent());
+        worker->loadRSUConfigListFromFile(testPath);
+        Json::Value updateMessage;
+        Json::Value unitConfig;
+        unitConfig["unitId"] = "Unit001";
+        updateMessage["unitConfig"] = unitConfig;
+        updateMessage["rsuConfigs"].append(createValidRsuConfigJson());
+
+        bool result = worker->updateTRUStatus(updateMessage);
+
+        EXPECT_FALSE(result);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestUpdateTRUStatusMismatchedUnitId)
+    {
+        string testPath = "/tmp/test_tru_config_mismatch.json";
+        createTestConfigFile(testPath, getValidCompleteConfigFileContent());
+        worker->loadRSUConfigListFromFile(testPath);
+        removeTestFile(testPath);
+
+        Json::Value updateMessage;
+        Json::Value unitConfig;
+        unitConfig["unitId"] = "WrongUnit";  // Doesn't match Unit001
+        updateMessage["unitConfig"] = unitConfig;
+        updateMessage["rsuConfigs"].append(createValidRsuConfigJson());
+        updateMessage["timestamp"] = 1234567890;
+
+        bool result = worker->updateTRUStatus(updateMessage);
+
+        EXPECT_FALSE(result);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestActionToString){
+        EXPECT_EQ(worker->actionToString(action::add), "add");
+        EXPECT_EQ(worker->actionToString(action::remove), "delete");
+        EXPECT_EQ(worker->actionToString(action::update), "update");
+        EXPECT_EQ(worker->actionToString(action::unknown), "unknown");
+        action ac;
+        EXPECT_EQ(worker->actionToString(ac), "unknown");
+    }
+
+    // ==================== rsuConfigToJsonValue Tests ====================
+
+    TEST_F(TestRSUConfigWorker, TestRsuConfigToJsonValue)
+    {
+        Json::Value configJson = createValidRsuConfigJson();
+        configJson["rsu"]["ip"] = "192.168.1.100";
+        configJson["event"] = "test_event";
+
+        Json::Value message;
+        message["rsuConfigs"].append(configJson);
+
+        worker->updateTRUStatus(message);
+
+        Json::Value output = worker->getTruConfigAsJsonArray();
+
+        EXPECT_TRUE(output.isMember("rsuConfigs"));
+        EXPECT_TRUE(output["rsuConfigs"].isArray());
+        EXPECT_TRUE(output["rsuConfigs"].empty());
+    }
+
+    // ==================== getTruConfigAsJsonArray Tests ====================
+
+    TEST_F(TestRSUConfigWorker, TestGetTruConfigAsJsonArrayStructure)
+    {
+        Json::Value result = worker->getTruConfigAsJsonArray();
+
+        EXPECT_TRUE(result.isMember("unitConfig"));
+        EXPECT_TRUE(result.isMember("rsuConfigs"));
+        EXPECT_TRUE(result.isMember("timestamp"));
+    }
+
+    TEST_F(TestRSUConfigWorker, TestGetTruConfigAsJsonArrayWithLoadedData)
+    {
+        string testPath = "/tmp/test_tru_config_loaded.json";
+        createTestConfigFile(testPath, getValidCompleteConfigFileContent());
+        worker->loadRSUConfigListFromFile(testPath);
+        removeTestFile(testPath);
+
+        Json::Value result = worker->getTruConfigAsJsonArray();
+
+        EXPECT_TRUE(result["rsuConfigs"].isArray());
+        EXPECT_GT(result["rsuConfigs"].size(), 0);
+        EXPECT_EQ(result["rsuConfigs"][0]["rsu"]["ip"].asString(), "192.168.1.10");
+    }
+
+    // ==================== getTRUConfigResponse Tests ====================
+
+    TEST_F(TestRSUConfigWorker, TestGetTRUConfigResponseSuccess)
+    {
+        Json::Value result = worker->getTRUConfigResponse(true);
+
+        EXPECT_TRUE(result.isMember("unitConfig"));
+        EXPECT_TRUE(result.isMember("rsuConfigs"));
+        EXPECT_TRUE(result.isMember("status"));
+        EXPECT_TRUE(result.isMember("timestamp"));
+        EXPECT_EQ(result["status"].asString(), "success");
+    }
+
+    TEST_F(TestRSUConfigWorker, TestGetTRUConfigResponseFailed)
+    {
+        Json::Value result = worker->getTRUConfigResponse(false);
+
+        EXPECT_TRUE(result.isMember("status"));
+        EXPECT_EQ(result["status"].asString(), "failed");
+    }
+
+    TEST_F(TestRSUConfigWorker, TestGetTRUConfigResponseStructure)
+    {
+        string testPath = "/tmp/test_tru_config_response.json";
+        createTestConfigFile(testPath, getValidCompleteConfigFileContent());
+        worker->loadRSUConfigListFromFile(testPath);
+        removeTestFile(testPath);
+
+        Json::Value result = worker->getTRUConfigResponse(true);
+
+        EXPECT_TRUE(result["unitConfig"].isObject());
+        EXPECT_TRUE(result["unitConfig"].isMember("unitId"));
+
+        EXPECT_TRUE(result["rsuConfigs"].isArray());
+        if (result["rsuConfigs"].size() > 0) {
+            EXPECT_TRUE(result["rsuConfigs"][0].isMember("ip"));
+            EXPECT_TRUE(result["rsuConfigs"][0].isMember("port"));
+        }
+    }
+
+    // ==================== getUnitId Tests ====================
+
+    TEST_F(TestRSUConfigWorker, TestGetUnitIdDefault)
+    {
+        string unitId = worker->getUnitId();
+        // Default should be empty
+        EXPECT_TRUE(unitId.empty());
+    }
+
+    TEST_F(TestRSUConfigWorker, TestGetUnitIdAfterLoad)
+    {
+        string testPath = "/tmp/test_tru_config_unitid.json";
+        createTestConfigFile(testPath, getValidCompleteConfigFileContent());
+        worker->loadRSUConfigListFromFile(testPath);
+        removeTestFile(testPath);
+
+        string unitId = worker->getUnitId();
+        EXPECT_EQ(unitId, "Unit001");
+    }
+
+
+    TEST_F(TestRSUConfigWorker, TestValidateRequiredKeysSuccess)
+    {
+        // Test through processRSUConfig which calls validateRequiredKeys
+        Json::Value config;
+        config["action"] = "add";
+        config["event"] = "test";
+        config["rsu"]["ip"] = "192.168.1.1";
+        config["rsu"]["port"] = 161;
+        config["snmp"]["user"] = "admin";
+        config["snmp"]["privacyProtocol"] = "AES";
+        config["snmp"]["authProtocol"] = "SHA";
+        config["snmp"]["authPassPhrase"] = "pass";
+        config["snmp"]["privacyPassPhrase"] = "priv";
+        config["snmp"]["rsuMibVersion"] = "4.1";
+        config["snmp"]["securityLevel"] = "authPriv";
+
+        bool result = worker->processRSUConfig(config);
+        EXPECT_TRUE(result);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestValidateRequiredKeysMissing)
+    {
+        Json::Value config;
+        config["action"] = "add";
+        config["event"] = "test";
+        config["rsu"]["ip"] = "192.168.1.1";
+        config["snmp"]["user"] = "admin";
+        // Missing other required SNMP keys
+
+        bool result = worker->processRSUConfig(config);
+        EXPECT_FALSE(result);  // Should catch exception and return false
+    }
+
+
+    TEST_F(TestRSUConfigWorker, TestSetJsonArrayToUnitConfigAllFields)
+    {
+        Json::Value notArray;
+        notArray["key"] = "value";
+
+        bool result = worker->setJsonArrayToUnitConfig(notArray);
+        EXPECT_FALSE(result);
+
+        Json::Value unitConfigArray;
+
+        Json::Value unitConfiguration;
+        unitConfiguration["unitId"] = "TestUnit";
+        unitConfiguration["name"] = "UnitName";
+        unitConfiguration["maxConnections"] = 1;
+        unitConfiguration["bridgePluginHeartbeatInterval"] = 30;
+        unitConfiguration["healthMonitorPluginHeartbeatInterval"] = 60;
+        unitConfiguration["rsuStatusMonitorInterval"] = 120;
+        unitConfiguration["unknownKey"] = "ignored";
+        unitConfigArray.append(unitConfiguration);
+
+
+
+        result = worker->setJsonArrayToUnitConfig(unitConfigArray);
+        EXPECT_TRUE(result);
+
+        auto jsonConfig = worker->getUnitConfigAsJsonArray();
+        EXPECT_EQ(jsonConfig["unitId"].asString(),"TestUnit");
+        EXPECT_EQ(jsonConfig["name"].asString(), "UnitName");
+        EXPECT_EQ(jsonConfig["maxConnections"].asInt(), 1);
+        EXPECT_EQ(jsonConfig["rsuStatusMonitorInterval"].asInt(), 120);
+
+    }
+
+
+    TEST_F(TestRSUConfigWorker, TestProcessRSUConfigDuplicate)
+    {
+        // First add an RSU
+        Json::Value config = createValidRsuConfigJson();
+        config["rsu"]["ip"] = "192.168.1.10";
+        worker->processRSUConfig(config);
+
+        // Try to add same IP again
+        bool result = worker->processRSUConfig(config);
+        EXPECT_FALSE(result);  // Duplicate check fails
+    }
+
+    TEST_F(TestRSUConfigWorker, TestProcessRSUConfigMissingRsuObject)
+    {
+        string testPath = "/tmp/test_tru_config_mismatch.json";
+        createTestConfigFile(testPath, getValidCompleteConfigFileContent());
+        worker->loadRSUConfigListFromFile(testPath);
+
+        Json::Value config;
+        config["action"] = "add";
+        config["event"] = "test";
+        // Missing "rsu" object
+
+        bool result = worker->processRSUConfig(config);
+        EXPECT_FALSE(result);
+    }
+
+
+    TEST_F(TestRSUConfigWorker, TestProcessUpdateActionExisting)
+    {
+        // Test updating a non-registered RSU returns false
+        rsuConfig config;
+        config.actionType = action::update;
+        config.event = "test";
+        config.rsu.ip = "192.168.1.50";
+        config.rsu.port = 161;
+        config.snmp.userKey = "user";
+
+        bool result = worker->processUpdateAction(config);
+        EXPECT_FALSE(result);  // Returns false since RSU not registered
+        auto truConfig = worker->getTruConfigAsJsonArray();
+        EXPECT_TRUE(truConfig["rsuConfigs"].size() == 0);
+
+        // First add RSU
+        Json::Value addMsg(Json::arrayValue);
+        Json::Value rsuConfigJson = createValidRsuConfigJson();
+        rsuConfigJson["rsu"]["ip"] = "192.168.1.60";
+        addMsg.append(rsuConfigJson);
+        worker->setJsonArrayToRsuConfigList(addMsg);
+
+        // Now update the existing RSU
+        rsuConfig updatedConfig;
+        updatedConfig.actionType = action::update;
+        updatedConfig.event = "updated";
+        updatedConfig.rsu.ip = "192.168.1.60";
+        updatedConfig.rsu.port = 8080;
+        updatedConfig.snmp.userKey = "newuser";
+
+        result = worker->processUpdateAction(updatedConfig);
+        EXPECT_TRUE(result);
+
+        truConfig = worker->getTruConfigAsJsonArray();
+        EXPECT_TRUE(truConfig["rsuConfigs"].size() == 1);
+
+        // Verify the update was applied
+        EXPECT_EQ(truConfig["rsuConfigs"][0]["event"].asString(), "updated");
+        EXPECT_EQ(truConfig["rsuConfigs"][0]["snmp"]["user"].asString(), "newuser");
+
+        // Clean up by deleting
+        result = worker->processDeleteAction(updatedConfig);
+        truConfig = worker->getTruConfigAsJsonArray();
+        EXPECT_TRUE(truConfig["rsuConfigs"].size() == 0);
+        EXPECT_TRUE(result);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestProcessDeleteActionNotRegistered)
+    {
+        rsuConfig config;
+        config.rsu.ip = "192.168.1.99";
+
+        bool result = worker->processDeleteAction(config);
+        EXPECT_FALSE(result);  // Returns false when RSU not found
+    }
+
+    TEST_F(TestRSUConfigWorker, TestProcessDeleteActionSuccess)
+    {
+        // First add RSU
+        Json::Value addMsg(Json::arrayValue);
+        Json::Value rsuConfigJson = createValidRsuConfigJson();
+        rsuConfigJson["rsu"]["ip"] = "192.168.1.70";
+        addMsg.append(rsuConfigJson);
+        worker->setJsonArrayToRsuConfigList(addMsg);
+
+        // Now delete it
+        rsuConfig deleteConfig;
+        deleteConfig.rsu.ip = "192.168.1.70";
+
+        bool result = worker->processDeleteAction(deleteConfig);
+        EXPECT_TRUE(result);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestProcessAddActionSuccess)
+    {
+        rsuConfig config;
+        config.actionType = action::add;
+        config.event = "test";
+        config.rsu.ip = "192.168.1.80";
+        config.rsu.port = 161;
+        config.snmp.userKey = "user";
+
+        bool result = worker->processAddAction(config);
+        EXPECT_TRUE(result);
+
+        auto truConfig = worker->getTruConfigAsJsonArray();
+        EXPECT_EQ(truConfig["rsuConfigs"].size(), 1);
+        EXPECT_EQ(truConfig["rsuConfigs"][0]["rsu"]["ip"].asString(), "192.168.1.80");
+    }
+
+    TEST_F(TestRSUConfigWorker, TestProcessAddActionMaxConnectionsReached)
+    {
+        // Set max connections to 2 by loading a config file
+        string testPath = "/tmp/test_max_connections.json";
+        string configContent = R"({
+            "unitConfig": {
+                "unitId": "TestUnit",
+                "maxConnections": 2
+            },
+            "rsuConfigs": [],
+            "timestamp": 1234567890
+        })";
+        createTestConfigFile(testPath, configContent);
+        worker->loadRSUConfigListFromFile(testPath);
+        removeTestFile(testPath);
+
+        // Add first RSU
+        rsuConfig config1;
+        config1.actionType = action::add;
+        config1.event = "test1";
+        config1.rsu.ip = "192.168.1.81";
+        config1.rsu.port = 161;
+        config1.snmp.userKey = "user1";
+
+        bool result = worker->processAddAction(config1);
+        EXPECT_TRUE(result);
+
+        // Add second RSU
+        rsuConfig config2;
+        config2.actionType = action::add;
+        config2.event = "test2";
+        config2.rsu.ip = "192.168.1.82";
+        config2.rsu.port = 161;
+        config2.snmp.userKey = "user2";
+
+        result = worker->processAddAction(config2);
+        EXPECT_TRUE(result);
+
+        rsuConfig config3;
+        config3.actionType = action::add;
+        config3.event = "test3";
+        config3.rsu.ip = "192.168.1.83";
+        config3.rsu.port = 161;
+        config3.snmp.userKey = "user3";
+
+        result = worker->processAddAction(config3);
+        EXPECT_FALSE(result);  
+
+        auto truConfig = worker->getTruConfigAsJsonArray();
+        EXPECT_EQ(truConfig["rsuConfigs"].size(), 2);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestProcessUpdateActionMaxConnectionsReached)
+    {
+        // Set max connections to 1
+        string testPath = "/tmp/test_update_max_connections.json";
+        string configContent = R"({
+            "unitConfig": {
+                "unitId": "TestUnit",
+                "maxConnections": 1
+            },
+            "rsuConfigs": [],
+            "timestamp": 1234567890
+        })";
+        createTestConfigFile(testPath, configContent);
+        worker->loadRSUConfigListFromFile(testPath);
+        removeTestFile(testPath);
+
+        // Add first RSU
+        rsuConfig config1;
+        config1.actionType = action::add;
+        config1.event = "test1";
+        config1.rsu.ip = "192.168.1.91";
+        config1.rsu.port = 161;
+        config1.snmp.userKey = "user1";
+
+        bool result = worker->processAddAction(config1);
+        EXPECT_TRUE(result);
+
+        rsuConfig config2;
+        config2.actionType = action::update;
+        config2.event = "test2";
+        config2.rsu.ip = "192.168.1.92";
+        config2.rsu.port = 161;
+        config2.snmp.userKey = "user2";
+
+        result = worker->processUpdateAction(config2);
+        EXPECT_FALSE(result); 
+
+        auto truConfig = worker->getTruConfigAsJsonArray();
+        EXPECT_EQ(truConfig["rsuConfigs"].size(), 1);
+        EXPECT_EQ(truConfig["rsuConfigs"][0]["rsu"]["ip"].asString(), "192.168.1.91");
+    }
+
+    TEST_F(TestRSUConfigWorker, getPluginHeartBeatInterval)
+    {
+        int interval = worker->getPluginHeartBeatInterval();
+        EXPECT_EQ(interval, 10); // Default value
+    }
+
+    TEST_F(TestRSUConfigWorker, TestSetJsonArrayToRsuConfigListWithUnknownAction)
+    {
+        // Test that unknown action type triggers the default case in switch statement
+        Json::Value message;
+        Json::Value rsuConfigJson = createValidRsuConfigJson();
+        rsuConfigJson["action"] = "invalid_action";  // This will result in action::unknown
+        message.append(rsuConfigJson);
+
+        bool result = worker->setJsonArrayToRsuConfigList(message);
+        EXPECT_FALSE(result);  // Should still return true, but RSU not added due to unknown action
+
+        // Verify that the RSU was not added (unknown action skips processing)
+        auto truConfig = worker->getTruConfigAsJsonArray();
+        EXPECT_EQ(truConfig["rsuConfigs"].size(), 0);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestSetJsonArrayToRsuConfigListWithInvalidJson)
+    {
+        // Test the failure path when jsonValueToRsuConfig returns false
+        Json::Value message;
+        Json::Value invalidConfig;
+        invalidConfig["action"] = "add";
+        // Missing required fields like "event", "rsu", "snmp" to make jsonValueToRsuConfig fail
+        message.append(invalidConfig);
+
+        bool result = worker->setJsonArrayToRsuConfigList(message);
+        EXPECT_FALSE(result);  // Should return false due to parse failure
+
+        // Verify no RSU was added
+        auto truConfig = worker->getTruConfigAsJsonArray();
+        EXPECT_EQ(truConfig["rsuConfigs"].size(), 0);
+    }
+
+    TEST_F(TestRSUConfigWorker, TestSetJsonArrayToRsuConfigListMultipleActionsIncludingUnknown)
+    {
+        // Test processing multiple configs including one with unknown action
+        Json::Value message;
+        
+        // Valid add action
+        Json::Value addConfig = createValidRsuConfigJson();
+        addConfig["action"] = "add";
+        addConfig["rsu"]["ip"] = "192.168.1.100";
+        message.append(addConfig);
+        
+        // Unknown action
+        Json::Value unknownConfig = createValidRsuConfigJson();
+        unknownConfig["action"] = "unknown_action";
+        unknownConfig["rsu"]["ip"] = "192.168.1.101";
+        message.append(unknownConfig);
+        
+        // Valid update action (will fail since not registered, but still valid)
+        Json::Value updateConfig = createValidRsuConfigJson();
+        updateConfig["action"] = "update";
+        updateConfig["rsu"]["ip"] = "192.168.1.102";
+        message.append(updateConfig);
+
+        bool result = worker->setJsonArrayToRsuConfigList(message);
+        EXPECT_FALSE(result);  // Overall should fail due to unknown action
+
+        // Only the add action should have been processed
+        auto truConfig = worker->getTruConfigAsJsonArray();
+        EXPECT_EQ(truConfig["rsuConfigs"].size(), 1);
+        EXPECT_EQ(truConfig["rsuConfigs"][0]["rsu"]["ip"].asString(), "192.168.1.100");
+    }
+}

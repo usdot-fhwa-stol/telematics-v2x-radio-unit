@@ -1,4 +1,5 @@
 on:
+  workflow_dispatch:
   push:
     branches:
       - develop
@@ -9,7 +10,7 @@ on:
 name: Sonar Workflow
 jobs:
   sonarcloud:
-    
+
     runs-on: ubuntu-latest
     container:
       image: ubuntu:jammy-20230126
@@ -23,7 +24,7 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           apt-get install -y curl zip git gcovr
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting
           fetch-depth: 0
@@ -45,7 +46,7 @@ jobs:
         run: |
           mkdir bw-output
           cd src
-          build-wrapper-linux-x86-64 --out-dir ../bw-output bash build.sh coverage --j2735-version 2024 --skip-plugins ""
+          build-wrapper-linux-x86-64 --out-dir ../bw-output bash build.sh coverage --j2735-version 2024
           ./test.sh coverage
       - name: Run sonar-scanner
         uses: usdot-fhwa-stol/actions/sonar-scanner@main

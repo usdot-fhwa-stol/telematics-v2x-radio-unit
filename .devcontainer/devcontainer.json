@@ -3,7 +3,7 @@
 {
 	// Docker Compose syntax from https://github.com/devcontainers/templates/blob/main/src/docker-existing-docker-compose/.devcontainer/devcontainer.json
 	// and https://github.com/microsoft/vscode-dev-containers/blob/main/container-templates/docker-compose/.devcontainer/devcontainer.json
-	"name": "V2X Hub Docker Compose Dev",
+	"name": "Telematics V2X Radio Unit Docker Compose Dev",
 	// Check for .env file in configuration directory. Copy devcontainer.env if none exists
 	"initializeCommand" : ".devcontainer/check_for_env.sh",
 	// Update the 'dockerComposeFile' list if you have more compose files or use different names.
@@ -11,7 +11,9 @@
 
 	// The 'service' property is the name of the service for the container that VS Code should
 	// use. Update this value and .devcontainer/docker-compose.yml to the real service name.
-	"service": "v2xhub",
+	"service": "telematics-v2x-radio-unit",
+
+	"runServices": ["telematics-v2x-radio-unit", "tru_db"],
 
 	// The 'workspaceFolder' property is the path VS Code should open by default when
 	// connected. Corresponds to a volume mount in .devcontainer/docker-compose.yml
