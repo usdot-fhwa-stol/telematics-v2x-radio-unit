@@ -243,7 +243,18 @@ namespace TelematicBridge
         metadata[TelematicJsonKeys::RSU] = rsu;
 
         // Add timestamp (in milliseconds)
-        metadata[TelematicJsonKeys::TIMESTAMP] = std::to_string(duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count());
+        auto nowMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+        metadata[TelematicJsonKeys::TIMESTAMP] = std::to_string(nowMs);
+
+        // Add ingress performance checkpoint timestamp when PERF_METRICS_ENABLED is set.
+        // This marks the moment the message is packaged at the radio unit for NATS publish.
+        const char *perfEnabled = std::getenv("PERF_METRICS_ENABLED");
+        if (perfEnabled != nullptr && (std::string(perfEnabled) == "true" || std::string(perfEnabled) == "TRUE"))
+        {
+            metadata[TelematicJsonKeys::PERF_TS_INGRESS] = std::to_string(nowMs);
+            PLOG(tmx::utils::LogLevel::logINFO) << "[PERF][INGRESS] perf_ts_ingress=" << nowMs
+                                                << " unit_id=" << unitId << " topic=" << topicName << " rsu_ip=" << rsuIp;
+        }
 
         // Add event name
         metadata[TelematicJsonKeys::EVENT] = eventName;

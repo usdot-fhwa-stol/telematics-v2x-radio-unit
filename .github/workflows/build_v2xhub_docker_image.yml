@@ -1,4 +1,4 @@
-name: Build V2X-Hub Docker Image
+name: Build Telematics-rsu-unit
 
 on:
   workflow_dispatch:

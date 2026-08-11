@@ -19,7 +19,7 @@ services:
       - /etc/timezone:/etc/timezone:ro
 
   telematics-v2x-radio-unit:
-    image: usdotfhwastol/telematics-v2x-radio-unit:develop
+    image: ${DOCKER_ORG}/telematics-v2x-radio-unit:${DOCKER_TAG}
     profiles:
       - rsu_integration
     container_name: telematics-v2x-radio-unit
@@ -63,6 +63,7 @@ services:
       - IS_TRU=TRUE                                                  # Enable TRU mode
       - NATS_URL=nats://host.docker.internal:4222                              # NATS server URL
       - RSU_CONFIG_PATH=/var/www/plugins/rsuConfigs.json
+      - PERF_METRICS_ENABLED=${PERF_METRICS_ENABLED:-false}
     secrets:
       - mysql_password
     volumes:
@@ -73,7 +74,7 @@ services:
       - ${RADIO_UNIT_RSU_CONFIGS_PATH:-rsuConfigs.json}:/var/www/plugins/rsuConfigs.json:ro
 
   telematics-v2x-radio-unit-instance-2:
-    image: usdotfhwastol/telematics-v2x-radio-unit:develop
+    image: ${DOCKER_ORG}/telematics-v2x-radio-unit:${DOCKER_TAG}
     profiles:
       - rsu_integration
     container_name: telematics-v2x-radio-unit-instance-2
@@ -117,6 +118,7 @@ services:
       - IS_TRU=TRUE                                                  # Enable TRU mode
       - NATS_URL=nats://host.docker.internal:4222                              #
       - RSU_CONFIG_PATH=/var/www/plugins/rsuConfigs.json
+      - PERF_METRICS_ENABLED=${PERF_METRICS_ENABLED:-false}
     secrets:
       - mysql_password
     volumes:
