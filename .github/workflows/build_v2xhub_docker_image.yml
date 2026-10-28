@@ -105,7 +105,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   manifest:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-26.04
     needs: [ determine_docker_org_and_tag, build-amd64, build-arm64 ]
     steps:
       - name: Log in to Docker Hub
